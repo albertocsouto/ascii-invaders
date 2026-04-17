@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ASCII Invaders</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+	<style>
+	:root {
+		--bg:     #000014;
+		--gold:   #FFCC1A;
+		--blue:   #66CCFF;
+		--red:    #FF4D4D;
+		--green:  #33FF66;
+		--white:  #FFFFFF;
+		--dim:    #666685;
+		--sep:    #2E2E61;
+		--yellow: #FFFF40;
+	}
+
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+
+	html, body {
+		background: var(--bg);
+		color: var(--white);
+		font-family: 'Share Tech Mono', monospace;
+		min-height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	header {
+		padding: 32px 16px 20px;
+		text-align: center;
+	}
+
+	h1 {
+		font-size: clamp(10px, 1.5vw, 16px);
+		line-height: 1.2;
+		margin-bottom: 20px;
+		white-space: pre;
+	}
+
+	.subtitle {
+		color: var(--blue);
+		font-size: 13px;
+		letter-spacing: 3px;
+		text-transform: uppercase;
+		margin-bottom: 8px;
+	}
+
+	.hint {
+		color: var(--dim);
+		font-size: 11px;
+	}
+
+	.row-sep {
+		text-align: center;
+		font-size: 14px;
+		padding: 6px 0;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	main {
+		flex: 1;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 20px 8px;
+	}
+
+	.canvas-wrapper {
+		border: 2px solid var(--sep);
+		outline: 1px solid var(--gold);
+		outline-offset: 4px;
+	}
+
+	canvas {
+		display: block;
+		max-width: 100%;
+		background: #000;
+		vertical-align: middle;
+	}
+
+	footer {
+		padding: 14px 8px;
+		text-align: center;
+		font-size: 11px;
+		color: var(--dim);
+	}
+	footer a { color: var(--blue); text-decoration: none; }
+	footer a:hover { color: var(--gold); }
+
+	@media (max-width: 860px) {
+		h1 { font-size: 8px; }
+	}
+	</style>
+	<script src="coi-serviceworker.js"></script>
+</head>
+<body>
+
+<header>
+	<h1><span style="color:#FFCC1A">  ###   #####   #####  #####  ##### </span>
+<span style="color:#66CCFF"> #   #  #       #        #      #   </span>
+<span style="color:#FF4D4D"> #####   ###    #        #      #   </span>
+<span style="color:#66CCFF"> #   #       #  #        #      #   </span>
+<span style="color:#FFCC1A"> #   #  #####   #####  #####  ##### </span>
+
+<span style="color:#FFCC1A"> #####  #   #  #   #   ###   ####   #####  ####   ##### </span>
+<span style="color:#66CCFF">   #    ##  #  #   #  #   #  #   #  #      #   #  #     </span>
+<span style="color:#FF4D4D">   #    # # #   # #   #####  #   #  ####   ####    ###  </span>
+<span style="color:#66CCFF">   #    #  ##   # #   #   #  #   #  #      # #        # </span>
+<span style="color:#FFCC1A"> #####  #   #    #    #   #  ####   #####  #  ##  ##### </span></h1>
+	<p class="subtitle">typing space shooter</p>
+	<p class="hint">type the words &mdash; shoot the invaders</p>
+</header>
+
+<div class="row-sep" style="color:#66FF80">  o o    o o    o o    o o    o o    o o    o o    o o    o o    o o  </div>
+<div class="row-sep" style="color:#2E2E61">  @@@    @@@    @@@    @@@    @@@    @@@    @@@    @@@    @@@    @@@  </div>
+
+<main>
+	<div class="canvas-wrapper">
+		<canvas id="canvas" width="840" height="640"></canvas>
+	</div>
+</main>
+
+<div class="row-sep" style="color:#FF4D4D"> :   :   :   :   :   :   :   :   :   :   :   :   :   :   :   :   : </div>
+
+<footer>&copy; Alberto Caamaño Souto &middot; <a href="https://github.com/albertocsouto/ascii-invaders" target="_blank">Source on GitHub</a> &middot; Made using the <a href="https://love2d.org/" target="_blank">LÖVE Framework</a> (<a href="https://raw.githubusercontent.com/love2d/love/main/license.txt" target="_blank">License</a>) &middot; Packaged using <a href="https://schellingb.github.io/LoveWebBuilder/" target="_blank">LÖVE Web Builder</a></footer>
+
+<script type="text/javascript">(function(){
+var TXT =
+{
+	PLAYBTN: 'CLICK TO LAUNCH',
+	LOAD:    'LOADING GAME DATA',
+	PARSE:   'PREPARING GAME',
+	EXECUTE: 'STARTING GAME',
+	DLERROR: 'Error while downloading game data.\nCheck your internet connection.',
+	NOWEBGL: 'Your browser or graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a>.<br>Find out how to get it <a href="http://get.webgl.org/">here</a>.',
+};
+var canvas = document.getElementById('canvas'), ctx;
+var Msg = function(m)
+{
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = '#66CCFF';
+	for (var i = 0, a = m.split('\n'), n = a.length; i != n; i++)
+		ctx.fillText(a[i], canvas.width/2, canvas.height/2-(n-1)*20+10+i*40);
+};
+var Fail = function(m)
+{
+	canvas.outerHTML = '<div style="max-width:90%;width:'+canvas.clientWidth+'px;height:'+canvas.clientHeight+'px;background:#000014;display:table-cell;vertical-align:middle"><div style="background-color:#000014;color:#FFCC1A;border:2px solid #2E2E61;outline:1px solid #FFCC1A;outline-offset:4px;padding:1.5em;max-width:640px;width:80%;margin:auto;text-align:center;font-family:monospace">'+TXT.NOWEBGL+(m?'<br><br>'+m:'')+'</div></div>';
+};
+var DoExecute = function()
+{
+	Msg(TXT.EXECUTE);
+	Module.canvas = canvas.cloneNode(false);
+	Module.canvas.oncontextmenu = function(e) { e.preventDefault() };
+	Module.setWindowTitle = function(title) { };
+	Module.postRun = function()
+	{
+		if (!Module.noExitRuntime) { Fail(); return; }
+		canvas.parentNode.replaceChild(Module.canvas, canvas);
+		Txt = Msg = ctx = canvas = null;
+		Module.canvas.focus();
+	};
+	setTimeout(function() { Module.run(['/p']); }, 50);
+};
+var DoLoad = function()
+{
+	Msg(TXT.LOAD);
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', 'game.js');
+	xhr.onprogress = function(e)
+	{
+		if (!e.lengthComputable || ctx.pCnt++ < 5) return;
+		var x = canvas.width/2-150, y = canvas.height*.6, w = Math.min(e.loaded/e.total,1)*300, g = ctx.createLinearGradient(x,0,x+w,0);
+		g.addColorStop(0,'#66CCFF');g.addColorStop(1,'#33FF66');
+		ctx.fillStyle = '#FFCC1A'; ctx.fillRect(x-2,y-2,304,28);
+		ctx.fillStyle = '#000014'; ctx.fillRect(x  ,y  ,300,24);
+		ctx.fillStyle = g;         ctx.fillRect(x  ,y  ,w,  24);
+	};
+	xhr.onerror = xhr.onabort = function() { Msg(TXT.DLERROR); canvas.disabled = false; };
+	xhr.onload = function()
+	{
+		if (xhr.status != 200) { Msg(TXT.DLERROR + '\nStatus: ' + xhr.statusText ); canvas.disabled = false; return; }
+		Msg(TXT.PARSE);
+		setTimeout(function()
+		{
+			window.onerror = function(e,u,l) { Fail(e+'<br>('+u+':'+l+')'); };
+			Module = { TOTAL_MEMORY: 1024*1024*24, TOTAL_STACK: 1024*1024*2, currentScriptUrl: '-', preInit: DoExecute };
+			var s = document.createElement('script'), d = document.documentElement;
+			s.textContent = xhr.response;
+			d.appendChild(s);
+			d.removeChild(s);
+			xhr = xhr.response = s = s.textContent = null;
+		},50);
+	};
+	xhr.send();
+}
+var DoSetup = function()
+{
+	canvas.onclick = function()
+	{
+		if (canvas.disabled) return;
+		canvas.disabled = true;
+		canvas.scrollIntoView();
+		ctx.pCnt = 0;
+		DoLoad();
+	};
+	ctx.fillStyle = '#FFCC1A';
+	ctx.fillRect(canvas.width/2-254, canvas.height/2-54, 508, 108);
+	ctx.fillStyle = '#000014';
+	ctx.fillRect(canvas.width/2-250, canvas.height/2-50, 500, 100);
+	ctx.fillStyle = '#66CCFF';
+	ctx.fillText(TXT.PLAYBTN, canvas.width/2, canvas.height/2+12);
+};
+canvas.oncontextmenu = function(e) { e.preventDefault() };
+ctx = canvas.getContext('2d');
+ctx.font = 'bold 28px "Share Tech Mono", monospace';
+ctx.textAlign = 'center';
+DoSetup();
+})()</script>
+</body>
+</html>
